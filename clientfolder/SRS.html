@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>SRS</title>   
+    
+    <link rel="stylesheet" type="text/css" href="./SRS_files/bootstrap.min.css">
+    <style>
+        .container {
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: 20px;
+            margin-left: 80px;
+        }
+        .video-gradio-container{
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+        }
+        .video-container{
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            margin-left: 150px;
+        }
+        iframe{
+            flex: 1;
+            margin-top: 80px;
+            margin-right: 80px;
+        }
+        html, body {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container" height="100%">
+    
+        <input type="text" width="50%" id="txt_url" class="input-xxlarge" value="http://localhost:8080/live/livestream.flv" style="display: none;">
+        <button class="btn btn-primary" id="btn_play" style="opacity: 0;">Play</button>
+    </div>
+    <p></p>
+    <div class="video-gradio-container">
+        <div class="video-container" height="600px">
+            <img src='https://pic1.zhimg.com/70/v2-492772d7a1a0acc16f0e9a87c32ab9c8_1440w.avis?source=172ae18b&biz_tag=Post' style='width: 400px; height: auto; margin-right: 10px;' />
+            <video id="video_player" width="600px" height="600px" autoplay="" controls="" src="blob:https://ossrs.net/1a14e479-c34f-45a6-816f-054ec639c8f2"></video>
+            <audio id="audio_player" width="50%" autoplay="" controls="" style="display: none;"></audio>
+        </div>
+        <iframe allow="microphone; camera" src="http://localhost:9933/" width="1000" height="1000" frameborder="0"></iframe>
+    </div>
+</div>
+
+<script type="text/javascript" src="./SRS_files/jquery-1.12.2.min.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/bootstrap.min.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/mpegts-1.7.3.min.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/hls-0.14.17.min.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/dash-v4.5.1.all.min.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/json2.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/srs.page.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/srs.log.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/srs.utility.js.下载"></script>
+<script type="text/javascript" src="./SRS_files/winlin.utility.js.下载"></script>
+<script type="text/javascript">
+    var flvPlayer = null;
+    var tsPlayer = null;
+    var hlsPlayer = null;
+    var dashPlayer = null;
+
+    var stopPlayers = function () {
+        if (flvPlayer) {
+            flvPlayer.destroy();
+            flvPlayer = null;
+        }
+        if (tsPlayer) {
+            tsPlayer.destroy();
+            tsPlayer = null;
+        }
+        if (hlsPlayer) {
+            hlsPlayer.destroy();
+            hlsPlayer = null;
+        }
+        if (dashPlayer) {
+            dashPlayer.destroy();
+            dashPlayer = null;
+        }
+    };
+
+    var hide_for_error = function () {
+        $('#main_flash_alert').show();
+        $('#main_info').hide();
+        $('#main_tips').hide();
+        $('#video_player').hide();
+        $('#audio_player').hide();
+        //$('#btn_play').hide();
+
+        stopPlayers();
+    };
+
+    var show_for_video_ok = function () {
+        $('#main_flash_alert').hide();
+        $('#main_info').show();
+        $('#main_tips').show();
+        $('#video_player').show();
+        $('#audio_player').hide();
+        //$('#btn_play').show();
+    };
+
+    var show_for_audio_ok = function () {
+        $('#main_flash_alert').hide();
+        $('#main_info').show();
+        $('#main_tips').show();
+        $('#video_player').hide();
+        $('#audio_player').show();
+        //$('#btn_play').show();
+    };
+
+    var apply_url_change = function() {
+        var r = parse_rtmp_url("http://localhost:8080/live/livestream.flv");
+        console.log(r)
+        var url = window.location.protocol + "//" + query.host + query.pathname + "?autostart=true"
+            + "&app=" + r.app + "&stream=" + r.stream + "&server=" + r.server + "&port=" + r.port;
+        url += (query.shp_identify) ? "&shp_identify=" + query.shp_identify : '';
+        url += (r.vhost === "__defaultVhost__") ? "&vhost=" + r.server : "&vhost=" + r.vhost;
+        url += (r.schema !== "rtmp") ? "&schema=" + r.schema : '';
+        url += (query.buffer) ? "&buffer=" + query.buffer : '';
+        url += (query.api_port) ? "&api_port=" + query.api_port : '';
+
+        var queries = user_extra_params(query);
+        queries = user_extra_params(r, queries);
+
+        if (queries && queries.length) {
+            url += '&' + queries.join('&');
+        }
+        $("#player_url").text("http://localhost:8080/live/livestream.flv").attr("href", url);
+        $("#link_url").attr("href", url);
+
+        // For RTMP, not support.
+        if (r.schema === 'rtmp') {
+            hide_for_error();
+            return;
+        }
+
+        return r;
+    };
+
+    var start_play = function (r) {
+        stopPlayers();
+        if (!r) return;
+
+        // Use H5 native to play aac/mp3.
+        if (r.stream.indexOf('.mp3') > 0 || r.stream.indexOf('.aac') > 0) {
+            $('#audio_player').attr('src', r.url).show();
+            show_for_audio_ok();
+            return;
+        }
+
+        // Use H5 native to play mp4.
+        if (r.stream.indexOf('.mp4') > 0) {
+            $('#video_player').attr('src', r.url).show();
+            show_for_video_ok();
+            return;
+        }
+
+        // Start play HTTP-TS.
+        if (r.stream.indexOf('.ts') > 0) {
+            if (!mpegts.getFeatureList().mseLivePlayback) {
+                hide_for_error();
+                return;
+            }
+
+            show_for_video_ok();
+
+            tsPlayer = mpegts.createPlayer({type: 'mpegts', url: r.url, isLive: true, enableStashBuffer: false});
+            tsPlayer.attachMediaElement(document.getElementById('video_player'));
+            tsPlayer.load();
+            tsPlayer.play();
+            return;
+        }
+
+        // Start play HLS.
+        if (r.stream.indexOf('.m3u8') > 0) {
+            if (!Hls.isSupported()) {
+                hide_for_error();
+                return;
+            }
+
+            show_for_video_ok();
+
+            hlsPlayer = new Hls();
+            hlsPlayer.loadSource(r.url);
+            hlsPlayer.attachMedia(document.getElementById('video_player'));
+            return;
+        }
+
+        // Start play MPEG-DASH.
+        if (r.stream.indexOf('.mpd') > 0) {
+            show_for_video_ok();
+
+            dashPlayer = dashjs.MediaPlayer().create();
+            dashPlayer.initialize(document.querySelector("#video_player"), r.url, true);
+            return;
+        }
+
+        // Start play HTTP-FLV.
+        let isFlv = r.stream.indexOf('.flv') > 0;
+        // Compatible with NGINX-HTTP-FLV module, see https://github.com/winshining/nginx-http-flv-module and the stream
+        // url without .flv, such as:
+        //          http://localhost:8080/live?app=live&stream=livestream
+        isFlv = isFlv || r.stream && r.url.indexOf('http') === 0;
+        if (isFlv) {
+            if (!mpegts.getFeatureList().mseLivePlayback) {
+                hide_for_error();
+                return;
+            }
+
+            show_for_video_ok();
+
+            flvPlayer = mpegts.createPlayer({type: 'flv', url: r.url, isLive: true, enableStashBuffer: false});
+            flvPlayer.attachMediaElement(document.getElementById('video_player'));
+            flvPlayer.load();
+            flvPlayer.play();
+            return;
+        }
+
+        console.error('不支持的URL', r.url, r);
+        $('#video_player').hide();
+        $('#audio_player').hide();
+    };
+    $("#btn_play").click(function(){
+        $('#video_player').prop('muted', false);
+        $('#audio_player').prop('muted', false);
+        var r = apply_url_change();
+        start_play(r);
+    });
+    var query = parse_query_string();
+    srs_init_flv("#txt_url");
+    if (query.autostart === "true") {
+        $('#video_player').prop('muted', true);
+        console.warn('For autostart, we should mute it, see https://www.jianshu.com/p/c3c6944eed5a ' +
+            'or https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#audiovideo_elements');
+        var r = apply_url_change();
+        start_play(r);
+    } else {
+        $('#video_player').hide();
+        $('#audio_player').hide();
+    }
+    document.getElementById('btn_play').click()
+
+</script>
+<iframe id="bcRlSRru" frameborder="0" src="./SRS_files/translateSandbox.html" style="width: 0px; height: 0px; display: none;"></iframe></body></html>

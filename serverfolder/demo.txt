@@ -1,0 +1,23 @@
+conda activate qwenvl
+cd /home/tzheng2/workspace/scir-y2/stream-demo/stream-demo/serverfolder
+uvicorn chatserver:app --host "0.0.0.0" --port 9988
+
+conda activate fish-speech
+cd /home/tzheng2/workspace/scir-y2/stream-demo/stream-demo/serverfolder
+uvicorn ttsserver:app --port 9999
+
+conda activate sadtalker
+cd /home/tzheng2/workspace/scir-y2/stream-demo/stream-demo/serverfolder
+uvicorn tfgserver:app --port 9960 --host "0.0.0.0"
+
+ssh -N -L 22223:gpu08:9988 hpc
+ssh -N -L 22221:gpu15:9960 hpc
+ssh -N -L 8080:gpu15:8080 hpc
+srun -w gpu16 -t 08:00:00 --gres=gpu:a100-pcie-40gb:1 --pty bash -i
+192.168.1.115:9988
+192.168.1.115:9960
+192.168.1.115:8080
+
+本地开启face_demo6后点击srs.html网页
+
+本地 python chat_demo3.py

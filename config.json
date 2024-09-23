@@ -1,0 +1,24 @@
+{
+    "chat":{
+        "chaturl": "http://localhost:9988/chat",
+        "asrurl": "http://localhost:9988/asr",
+        "imgpath": "/home/tzheng2/workspace/scir-y2/stream-demo/stream-demo/serverfolder/assets/image",
+        "chatmodel": "qwenvl"
+    },
+    "tts":{
+        "ttsmodel": "fishspeech"
+    },
+    "tfg":{
+        "tfgmodel": "sadtalker",
+        "getvurl": "http://localhost:9960/getv",
+        "isgenurl": "http://localhost:9960/sgen",
+        "chroleurl": "http://localhost:9960/changerole"
+    },
+    "gradio":{
+        "share": false,
+        "inbrowser": false,
+        "port": 9933,
+        "host": "127.0.0.1",
+        "temp_dir": "./assets"
+    }
+}
