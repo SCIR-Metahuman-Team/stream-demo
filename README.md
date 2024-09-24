@@ -21,8 +21,5 @@ stream-demo项目主要用于整合所有metahuman相关的输入输出，以一
 ```
 该项目中主要给出<code>clientfolder</code>中所有文件的核心代码，以及<code>serverfolder/chatserver.py</code>核心代码，<code>serverfolder/models/</code>中简单给出了如何进行输出以匹配到chatserver.py中的接收端，从而将内容发送到客户端中。
 ## 环境配置
-```bash
-conda create -n scir-metahuman python=3.9
-pip install -r requirements.txt
-```
+后续给出
 python中的rtmp流式传输环境搭建，请参考[python-rtmpstream](https://github.com/lipku/python_rtmpstream)
