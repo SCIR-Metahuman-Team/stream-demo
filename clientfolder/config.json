@@ -1,0 +1,20 @@
+{
+    "url":{
+        "chaturl": "http://localhost:9988/chat",
+        "asrurl": "http://localhost:9988/asr",
+        "getvurl": "http://localhost:9960/getv",
+        "isgenurl": "http://localhost:9960/sgen",
+        "chroleurl": "http://localhost:9960/changerole"
+    },
+    "gradio":{
+        "share": false,
+        "inbrowser": false,
+        "port": 9933,
+        "host": "127.0.0.1",
+        "temp_dir": ".\\assets"
+    },
+    "server":{
+        "img_savepath": "/home/tzheng2/workspace/scir-y2/stream-demo/stream-demo/serverfolder/assets",
+        "imgpath": "/home/tzheng2/workspace/scir-y1/demo_server/assets"
+    }
+}
